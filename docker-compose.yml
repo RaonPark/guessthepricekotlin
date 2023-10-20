@@ -1,21 +1,23 @@
 version: "3"
 services:
   mysql:
-    image: mysql:8.0
+    image: mysql:8.1
     container_name: mysql
     ports:
-      - "3306:3306"
+      - "3308:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: ""
-      TZ: Asia/Seoul
-    command:
-      - --character-set-server=utf8mb4
-      - --collection-server=utf8mb4_unicode_ci
+      - TZ=Asia/Seoul
+      - MYSQL_DB=guesstheprice
+      - MYSQL_ROOT_USER=root
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_ROOT_HOST= mysql
     volumes:
       - ./db/mysql/data:/var/lib/mysql
-    platform: linux/x86_64
+    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
     networks:
       - guesstheprice
+    restart:
+      always
 
   redis-master:
     image: bitnami/redis:7.2.2
@@ -48,13 +50,13 @@ services:
     networks:
       - guesstheprice
     depends_on:
-      - redis1
+      - redis-master
 
   redis-sentinel1:
     image: bitnami/redis-sentinel:7.2.2
     container_name: redis-sentinel1
     ports:
-      - "26379:6379"
+      - "26379:26379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_MASTER_SET=redisMaster
@@ -69,7 +71,7 @@ services:
     image: bitnami/redis-sentinel:7.2.2
     container_name: redis-sentinel2
     ports:
-      - "26380:6379"
+      - "26380:26379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_MASTER_SET=redisMaster
@@ -84,7 +86,7 @@ services:
     image: bitnami/redis-sentinel:7.2.2
     container_name: redis-sentinel3
     ports:
-      - "26381:6379"
+      - "26381:26379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_MASTER_SET=redisMaster
