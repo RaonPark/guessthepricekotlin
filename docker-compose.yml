@@ -1,0 +1,102 @@
+version: "3"
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collection-server=utf8mb4_unicode_ci
+    volumes:
+      - ./db/mysql/data:/var/lib/mysql
+    platform: linux/x86_64
+    networks:
+      - guesstheprice
+
+  redis-master:
+    image: bitnami/redis:7.2.2
+    container_name: redis-master
+    ports:
+      - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_REPLICATION_MODE=master
+    volumes:
+      - ./db/redis/data:/var/lib/redis
+    restart:
+      always
+    networks:
+      - guesstheprice
+
+  redis-slave:
+    image: bitnami/redis:7.2.2
+    container_name: redis-slave
+    ports:
+      - "16379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-master
+    volumes:
+      - ./db/redis/data:/var/lib/redis
+    restart:
+      always
+    networks:
+      - guesstheprice
+    depends_on:
+      - redis1
+
+  redis-sentinel1:
+    image: bitnami/redis-sentinel:7.2.2
+    container_name: redis-sentinel1
+    ports:
+      - "26379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_MASTER_SET=redisMaster
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+    depends_on:
+      - redis-master
+      - redis-slave
+    networks:
+      - guesstheprice
+  redis-sentinel2:
+    image: bitnami/redis-sentinel:7.2.2
+    container_name: redis-sentinel2
+    ports:
+      - "26380:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_MASTER_SET=redisMaster
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+    depends_on:
+      - redis-master
+      - redis-slave
+    networks:
+      - guesstheprice
+  redis-sentinel3:
+    image: bitnami/redis-sentinel:7.2.2
+    container_name: redis-sentinel3
+    ports:
+      - "26381:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_MASTER_SET=redisMaster
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+    depends_on:
+      - redis-master
+      - redis-slave
+    networks:
+      - guesstheprice
+
+
+networks:
+  guesstheprice:
+    driver: bridge
