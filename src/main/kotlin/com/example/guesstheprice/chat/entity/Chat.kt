@@ -18,6 +18,13 @@ class Chat(
     @JoinColumn(name = "memberId")
     var sender: Member,
 
+    @Enumerated(value = EnumType.STRING)
+    var chatType: ChatType,
+
     @Column(nullable = false)
     var isDeleted: Boolean = false,
+
+    @ManyToOne
+    @JoinColumn(name = "chatRoomId")
+    var chatRoom: ChatRoom,
 ): BaseTimeEntity()

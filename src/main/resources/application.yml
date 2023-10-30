@@ -7,6 +7,15 @@ spring:
   security:
     user:
       password: 1
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 991389876820-hocli7nbum5fe3q5afa96c5nfr9ggg43.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
   data:
     redis:
       sentinel:
@@ -19,3 +28,5 @@ spring:
         shutdown-timeout: 200ms
         pool:
           enabled: true
+jwt:
+  secret-key: S0lOR1NHQU1CSVRRVUVFTlNHQU1CSVRWSUVOTkFHQU1CSVREQU5JU0hHQU1CSVRXSU5HR0FNQklU
