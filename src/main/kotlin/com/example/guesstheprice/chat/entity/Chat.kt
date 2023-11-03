@@ -13,7 +13,6 @@ class Chat(
     @Column(nullable = false)
     var message: String,
 
-    @Column(nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "memberId")
     var sender: Member,

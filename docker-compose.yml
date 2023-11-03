@@ -1,21 +1,20 @@
 version: "3"
 services:
-  mysql:
-    image: mysql:8.1
+  mysql_container:
+    image: mysql:8.1.0
     container_name: mysql
     ports:
       - "3308:3306"
     environment:
       - TZ=Asia/Seoul
-      - MYSQL_DB=guesstheprice
-      - MYSQL_ROOT_USER=root
+      - MYSQL_DATABASE=guesstheprice
       - MYSQL_ROOT_PASSWORD=1234
-      - MYSQL_ROOT_HOST= mysql
-    volumes:
-      - ./db/mysql/data:/var/lib/mysql
-    command: ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+      - MYSQL_USER=raonpark
+      - MYSQL_PASSWORD=1234
     networks:
       - guesstheprice
+    volumes:
+      - ./db/mysql
     restart:
       always
 
@@ -34,9 +33,9 @@ services:
     networks:
       - guesstheprice
 
-  redis-slave:
+  redis-slave1:
     image: bitnami/redis:7.2.2
-    container_name: redis-slave
+    container_name: redis-slave1
     ports:
       - "16379:6379"
     environment:
@@ -51,6 +50,24 @@ services:
       - guesstheprice
     depends_on:
       - redis-master
+  redis-slave2:
+    image: bitnami/redis:7.2.2
+    container_name: redis-slave2
+    ports:
+      - "16380:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-master
+    volumes:
+      - ./db/redis/data:/var/lib/redis
+    restart:
+      always
+    networks:
+      - guesstheprice
+    depends_on:
+      - redis-master
+      - redis-slave1
 
   redis-sentinel1:
     image: bitnami/redis-sentinel:7.2.2
@@ -59,12 +76,15 @@ services:
       - "26379:26379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_MASTER_SET=redisMaster
       - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT_NUMBER=6379
       - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+      - REDIS_SENTINEL_QUORUM=2
+      - REDIS_MASTER_SET=mymaster
     depends_on:
       - redis-master
-      - redis-slave
+      - redis-slave1
+      - redis-slave2
     networks:
       - guesstheprice
   redis-sentinel2:
@@ -74,12 +94,15 @@ services:
       - "26380:26379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_MASTER_SET=redisMaster
       - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT_NUMBER=6379
       - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+      - REDIS_SENTINEL_QUORUM=2
+      - REDIS_MASTER_SET=mymaster
     depends_on:
       - redis-master
-      - redis-slave
+      - redis-slave1
+      - redis-slave2
     networks:
       - guesstheprice
   redis-sentinel3:
@@ -89,12 +112,15 @@ services:
       - "26381:26379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
-      - REDIS_MASTER_SET=redisMaster
       - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT_NUMBER=6379
       - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+      - REDIS_SENTINEL_QUORUM=2
+      - REDIS_MASTER_SET=mymaster
     depends_on:
       - redis-master
-      - redis-slave
+      - redis-slave1
+      - redis-slave2
     networks:
       - guesstheprice
 

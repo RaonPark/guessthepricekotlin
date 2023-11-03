@@ -5,6 +5,8 @@ import com.example.guesstheprice.chat.service.impl.RedisMessagePublisher
 import io.lettuce.core.ReadFrom
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties
+import org.springframework.cache.annotation.CachingConfigurer
+import org.springframework.cache.annotation.EnableCaching
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisSentinelConfiguration
@@ -19,7 +21,8 @@ import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
 @Configuration
-class RedisConfig {
+@EnableCaching
+class RedisConfig: CachingConfigurer {
 
     @Autowired
     private lateinit var redisProperties: RedisProperties
@@ -39,6 +42,7 @@ class RedisConfig {
                 Integer.valueOf(node.split(":")[1])
             )
         }
+
 
         return LettuceConnectionFactory(sentinelConfig, clientConfig)
     }

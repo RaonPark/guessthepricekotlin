@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM openjdk:17
 LABEL authors="sumin"
 USER root
 ARG JAR_FILE=build/libs/*.jar

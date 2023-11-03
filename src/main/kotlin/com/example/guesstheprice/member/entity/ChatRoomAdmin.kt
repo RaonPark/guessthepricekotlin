@@ -10,12 +10,10 @@ class ChatRoomAdmin(
     @Column(name = "chatRoomAuthoritiesId")
     val id: Long?,
 
-    @Column
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "memberId")
     var roomAdmin: Member,
 
-    @Column
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chatRoomId")
     var chatRoom: ChatRoom,

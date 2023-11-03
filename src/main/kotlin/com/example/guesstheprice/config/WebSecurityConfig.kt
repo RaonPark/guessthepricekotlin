@@ -16,10 +16,13 @@ import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService
+import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.security.oauth2.core.oidc.user.OidcUserAuthority
+import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
 import org.springframework.security.oauth2.jwt.JwtDecoder
@@ -30,10 +33,9 @@ import javax.crypto.spec.SecretKeySpec
 
 @Configuration
 @EnableWebSecurity
-@ConfigurationProperties(value = "jwt")
 class WebSecurityConfig {
 
-    @Value("\${secret-key}")
+    @Value("\${jwt.secret-key}")
     lateinit var secretKey: String
 
     @Order(1)
@@ -41,8 +43,9 @@ class WebSecurityConfig {
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http.invoke {
             authorizeHttpRequests {
-                authorize("/", permitAll)
-                authorize("/swagger-ui/**", hasAnyAuthority("ROLE_ADMIN"))
+                authorize("/**", hasAnyRole("USER", "ADMIN"))
+                authorize("/token", permitAll)
+                authorize("/v3/api-docs/**", hasAnyRole("ADMIN"))
                 authorize(anyRequest, authenticated)
             }
             headers {
@@ -54,6 +57,9 @@ class WebSecurityConfig {
                 SessionCreationPolicy.STATELESS
             }
             oauth2Login {
+                // userInfoEndpoint에 해당하는 설정으로
+                // DefaultOAuth2UserService는 OAuth2UserService를 구현하는 구현체인데, 이 클래스를 커스터마이징하고 싶다면
+                // OAuth2UserService를 상속받은 클래스를 하나 만들던가 서비스를 구현하면 된다.
                 userInfoEndpoint {
 
                 }
@@ -70,51 +76,15 @@ class WebSecurityConfig {
         return http.build()
     }
 
-    private fun userAuthoritiesMapper(): GrantedAuthoritiesMapper = GrantedAuthoritiesMapper {
-        authorities: Collection<GrantedAuthority> ->
 
-        val mappedAuthorities = emptySet<GrantedAuthority>()
-
-        authorities.forEach {
-            grantedAuthority ->
-            if(grantedAuthority is OidcUserAuthority) {
-                val idToken = grantedAuthority.idToken
-                val userInfo = grantedAuthority.userInfo
-            } else if(grantedAuthority is OAuth2UserAuthority) {
-                val userAttributes = grantedAuthority.attributes
-            }
-        }
-
-        mappedAuthorities
-    }
-
-    @Bean
-    fun oidcUserService(): OAuth2UserService<OidcUserRequest, OidcUser> {
-        val delegate = OidcUserService()
-
-        return OAuth2UserService {
-            userRequest ->
-            var oidcUser = delegate.loadUser(userRequest)
-
-            val accessToken = userRequest.accessToken
-            val mappedAuthorities = HashSet<GrantedAuthority>()
-
-            // TODO("Fetch the authority information from the protected resource using accessToken")
-            // TODO("Map the authority information to one or more GrantedAuthority's and add it to mappedAuthorities")
-            // TODO("Create a copy of oidcUser but use the mappedAuthorities instead")
-            oidcUser = DefaultOidcUser(mappedAuthorities, oidcUser.idToken, oidcUser.userInfo)
-
-            oidcUser
-        }
-    }
 
     @Bean
     fun userDetailsService() : UserDetailsService {
         val manager = InMemoryUserDetailsManager()
         manager.createUser(User.withUsername("user")
-            .password("{noop}1234").roles("ROLE_USER").build())
+            .password("{noop}1234").roles("USER").build())
         manager.createUser(User.withUsername("admin")
-            .password("{noop}1234").roles("ROLE_USER", "ROLE_ADMIN").build())
+            .password("{noop}1234").roles("USER", "ADMIN").build())
         return manager
     }
 
@@ -127,5 +97,10 @@ class WebSecurityConfig {
         val algorithm = MacAlgorithm.HS512
         val secret = SecretKeySpec(secretKey.toByteArray(Charsets.UTF_8), algorithm.name)
         return NimbusJwtDecoder.withSecretKey(secret).build()
+    }
+
+    @Bean
+    fun jwtTokenProvider(): JwtTokenProvider {
+        return JwtTokenProvider(secretKey)
     }
 }

@@ -19,7 +19,6 @@ class ChatRoom(
     @Column(nullable = false)
     var roomThumbnail: String,
 
-    @Column(nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "memberId")
     var roomAdmin: Member,

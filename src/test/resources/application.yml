@@ -3,7 +3,7 @@ spring:
     username: raonpark
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://mysql_container:3306/guesstheprice?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://localhost:3308/guesstheprice?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
   security:
     user:
       password: 1
@@ -19,20 +19,24 @@ spring:
   data:
     redis:
       sentinel:
-        master: sentinel-master
+        master: mymaster
         nodes:
-          - redis-sentinel1:26379
-          - redis-sentinel2:26380
-          - redis-sentinel3:26381
+          - localhost:26379
+          - localhost:26380
+          - localhost:26381
       lettuce:
         shutdown-timeout: 200ms
         pool:
           enabled: true
+      host: redis-master
+      port: 6379
+
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
     generate-ddl: true
-
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL8Dialect
 jwt:
   secret-key: S0lOR1NHQU1CSVRRVUVFTlNHQU1CSVRWSUVOTkFHQU1CSVREQU5JU0hHQU1CSVRXSU5HR0FNQklU
